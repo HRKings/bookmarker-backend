@@ -1,0 +1,52 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bookmarker.API", "Bookmarker.API\Bookmarker.API.csproj", "{A29C239F-B67F-4D68-A45D-DF7154CAB146}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bookmarker.Data", "Bookmarker.Data\Bookmarker.Data.csproj", "{B6FD0D85-AEC8-47C9-9277-8EF208F135F2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bookmarker.Model", "Bookmarker.Model\Bookmarker.Model.csproj", "{7D26550D-8E27-415A-BFE2-F16D2C1863AA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bookmarker.Contracts", "Bookmarker.Contracts\Bookmarker.Contracts.csproj", "{270A30C1-9E1C-4E3E-ACF0-18447F5FB0FD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bookmarker.Extraction", "Bookmarker.Extraction\Bookmarker.Extraction.csproj", "{7A6BCB49-6AB2-4260-AB25-D33CD2A57E61}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bookmarker.Search", "Bookmarker.Search\Bookmarker.Search.csproj", "{F5A88065-B557-45EF-8992-B197792B0686}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bookmarker.Workers", "Bookmarker.Workers\Bookmarker.Workers.csproj", "{540D184A-FAB8-4300-9329-F51C7BD48288}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A29C239F-B67F-4D68-A45D-DF7154CAB146}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A29C239F-B67F-4D68-A45D-DF7154CAB146}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A29C239F-B67F-4D68-A45D-DF7154CAB146}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A29C239F-B67F-4D68-A45D-DF7154CAB146}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B6FD0D85-AEC8-47C9-9277-8EF208F135F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B6FD0D85-AEC8-47C9-9277-8EF208F135F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B6FD0D85-AEC8-47C9-9277-8EF208F135F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B6FD0D85-AEC8-47C9-9277-8EF208F135F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7D26550D-8E27-415A-BFE2-F16D2C1863AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D26550D-8E27-415A-BFE2-F16D2C1863AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D26550D-8E27-415A-BFE2-F16D2C1863AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D26550D-8E27-415A-BFE2-F16D2C1863AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{270A30C1-9E1C-4E3E-ACF0-18447F5FB0FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{270A30C1-9E1C-4E3E-ACF0-18447F5FB0FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{270A30C1-9E1C-4E3E-ACF0-18447F5FB0FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{270A30C1-9E1C-4E3E-ACF0-18447F5FB0FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7A6BCB49-6AB2-4260-AB25-D33CD2A57E61}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A6BCB49-6AB2-4260-AB25-D33CD2A57E61}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A6BCB49-6AB2-4260-AB25-D33CD2A57E61}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A6BCB49-6AB2-4260-AB25-D33CD2A57E61}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F5A88065-B557-45EF-8992-B197792B0686}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5A88065-B557-45EF-8992-B197792B0686}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5A88065-B557-45EF-8992-B197792B0686}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5A88065-B557-45EF-8992-B197792B0686}.Release|Any CPU.Build.0 = Release|Any CPU
+		{540D184A-FAB8-4300-9329-F51C7BD48288}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{540D184A-FAB8-4300-9329-F51C7BD48288}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{540D184A-FAB8-4300-9329-F51C7BD48288}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{540D184A-FAB8-4300-9329-F51C7BD48288}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

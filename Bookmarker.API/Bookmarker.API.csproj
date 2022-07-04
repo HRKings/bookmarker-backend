@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Bookmarker.Contracts\Bookmarker.Contracts.csproj" />
+      <ProjectReference Include="..\Bookmarker.Data\Bookmarker.Data.csproj" />
+      <ProjectReference Include="..\Bookmarker.Extraction\Bookmarker.Extraction.csproj" />
+      <ProjectReference Include="..\Bookmarker.Search\Bookmarker.Search.csproj" />
+      <ProjectReference Include="..\Bookmarker.Workers\Bookmarker.Workers.csproj" />
+    </ItemGroup>
+
+</Project>
