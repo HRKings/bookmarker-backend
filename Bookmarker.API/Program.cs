@@ -31,7 +31,8 @@ builder.Services.AddSwaggerGen();
 
 // Database
 builder.Services.AddDbContext<BookmarkerContext>(
-    options => options.UseNpgsql("Server=localhost;Port=5432;Database=bookmarker;User Id=postgres;Password=password;"), ServiceLifetime.Transient);
+    options => options.UseNpgsql(Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING") 
+                                 ?? throw new ArgumentNullException(nameof(options))), ServiceLifetime.Transient);
 
 // Repositories
 builder.Services.AddTransient<BookmarkRepository>();
@@ -44,7 +45,7 @@ builder.Services.AddTransient<BookmarkService>();
 builder.Services.AddTransient<CategoryService>();
 
 // MeiliSearch
-builder.Services.AddTransient(_ => new MeilisearchClient("http://localhost:7700", "verysecurekey"));
+builder.Services.AddTransient(_ => new MeilisearchClient(Environment.GetEnvironmentVariable("MEILISEARCH_URL"), Environment.GetEnvironmentVariable("MEILISEARCH_KEY")));
 builder.Services.AddTransient(serviceProvider => new IndexWrapper<SearchBookmark>(serviceProvider.GetRequiredService<MeilisearchClient>().Index("bookmark")));
 
 // Workers
