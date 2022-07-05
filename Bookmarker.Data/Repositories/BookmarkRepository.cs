@@ -1,69 +1,91 @@
-using System.Data;
-using Bookmarker.Contracts;
-using Bookmarker.Contracts.Base;
-using Bookmarker.Contracts.Base.Bookmark;
-using Bookmarker.Contracts.Base.Bookmark.Interfaces;
 using Bookmarker.Model;
-using Dapper;
+using Bookmarker.Model.Entities;
+using Bookmarker.Model.Utils;
+using Microsoft.EntityFrameworkCore;
 
 namespace Bookmarker.Data.Repositories;
 
-public class BookmarkRepository : IBookmarkRepository
+public class BookmarkRepository
 {
-    private readonly IDbConnection _dbConnection;
+    private readonly BookmarkerContext _dbConnection;
 
-    public BookmarkRepository(IDbConnection dbConnection)
+    public BookmarkRepository(BookmarkerContext dbConnection)
     {
         _dbConnection = dbConnection;
     }
 
-    public async Task<string?> Create(Bookmark content)
+    public async ValueTask<Bookmark?> Create(Bookmark data)
     {
-        var resultingId = await _dbConnection.QuerySingleAsync<string>(Queries.Bookmark.INSERT, new
-        {
-            url = content.Url, 
-            pureUrl = content.PureUrl,
-            title = content.Title, 
-            desc = content.Description, 
-            image = content.ImageUrl,
-            alt = content.ImageAlt, 
-            type = content.OgType, 
-            video = content.VideoUrl
-        });
-
-        return resultingId;
+        var entity = await _dbConnection.Bookmarks.AddAsync(data);
+        
+        var success = await _dbConnection.SaveChangesAsync() == 1;
+        if (!success)
+            return null;
+        
+        return entity.Entity;
     }
 
-    public Task<Bookmark?> GetById(string id)
-        => _dbConnection.QuerySingleOrDefaultAsync<Bookmark?>(Queries.Bookmark.GET_BY_ID, new {id});
+    public ValueTask<Bookmark?> GetById(string id)
+        => _dbConnection.Bookmarks.FindAsync(id.ToGuid());
 
-    public Task<IEnumerable<BookmarkEntity>?> GetPaginated(int limit, int offset)
-        => _dbConnection.QueryAsync<BookmarkEntity>(Queries.Bookmark.GET_ALL_PAGINATED, new {limit, offset});
+    public Task<List<Bookmark>> GetPaginated(int limit, int offset)
+        => _dbConnection.Bookmarks.Skip(offset).Take(limit).ToListAsync();
 
     public Task<int> GetTotalItems()
-        => _dbConnection.QuerySingleAsync<int>(Queries.Bookmark.GET_TOTAL_COUNT);
+        => _dbConnection.Bookmarks.CountAsync();
 
-    public Task<IEnumerable<(string, string)>?> GetActiveIdsAndUrls()
-        => _dbConnection.QueryAsync<(string, string)>(Queries.Bookmark.GET_ACTIVE_IDS_URLS);
+    public Task<List<Bookmark>> GetActives()
+        => _dbConnection.Bookmarks.Where(x => !(x.IsLinkBroken ?? false)).ToListAsync();
+    
+    public IAsyncEnumerable<Bookmark> GetDuplicatedLinks(string id, string url)
+        => _dbConnection.Bookmarks.Where(x => x.PureUrl == url && x.Id.ToString() != id).AsAsyncEnumerable();
 
-    public Task<IEnumerable<(string, string)>?> GetActiveIdsAndPureUrls()
-        => _dbConnection.QueryAsync<(string, string)>(Queries.Bookmark.GET_ACTIVE_IDS_PURE_URLS);
+    public async Task<bool> FlagBrokenLink(string id)
+    {
+        var toUpdate = await _dbConnection.Bookmarks.FindAsync(id.ToGuid());
 
-    public Task<IEnumerable<string>?> GetDuplicatedLinks(string id, string url)
-        => _dbConnection.QueryAsync<string>(Queries.Bookmark.GET_DUPLICATED_LINKS, new {id, url});
+        if (toUpdate is null)
+            return false;
 
-    public Task<int> FlagBrokenLink(string id)
-        => _dbConnection.ExecuteAsync(Queries.Bookmark.FLAG_BROKEN_LINK, new {id});
+        toUpdate.IsLinkBroken = true;
 
-    public Task<int> FlagDuplicatedLink(string id, string duplicate)
-        => _dbConnection.ExecuteAsync(Queries.DuplicatedLinks.FLAG_DUPLICATED_LINK, new {id, duplicate});
+        _dbConnection.Bookmarks.Update(toUpdate);
+        return await _dbConnection.SaveChangesAsync() == 1;
+    }
 
-    public Task<IEnumerable<BookmarkEntity>?> GetPaginatedByCategory(string categoryId, int limit, int offset)
-        => _dbConnection.QueryAsync<BookmarkEntity>(Queries.Bookmark.GET_PAGINATED_BY_CATEGORY, new {categoryId, limit, offset});
+    public async ValueTask<DuplicatedLink> FlagDuplicatedLink(string id, string duplicate)
+    {
+        var entity = await _dbConnection.DuplicatedLinks.AddAsync(new DuplicatedLink
+        {
+            OriginalId = id.ToGuid(),
+            DuplicatedId = duplicate.ToGuid()
+        });
+        
+        return entity.Entity;
+    }
+
+    public Task<List<Bookmark>> GetPaginatedByCategory(string categoryId, int limit, int offset)
+        => _dbConnection.Bookmarks.Where(x => x.CategoryId.ToString() == categoryId).Skip(offset).Take(limit)
+            .ToListAsync();
 
     public Task<int> GetItemsCountByCategory(string categoryId)
-        => _dbConnection.QuerySingleAsync<int>(Queries.Bookmark.GET_COUNT_BY_CATEGORY, new {categoryId});
+        => _dbConnection.Bookmarks.CountAsync(x => x.CategoryId.ToString() == categoryId);
 
-    public Task<BookmarkEntity?> SetCategory(string id, string categoryId)
-        => _dbConnection.QuerySingleAsync<BookmarkEntity?>(Queries.Bookmark.SET_CATEGORY, new {id, categoryId});
+    public async Task<Bookmark?> SetCategory(string id, string categoryId)
+    {
+        var toUpdate = await _dbConnection.Bookmarks.FindAsync(id.ToGuid());
+
+        if (toUpdate is null)
+            return null;
+
+        toUpdate.CategoryId = categoryId.ToGuid();
+
+        _dbConnection.Bookmarks.Update(toUpdate);
+        var success = await _dbConnection.SaveChangesAsync() == 1;
+
+        if (!success)
+            return null;
+
+        return toUpdate;
+    }
 }

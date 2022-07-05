@@ -13,6 +13,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Bookmarker.Contracts\Bookmarker.Contracts.csproj" />
+      <ProjectReference Include="..\Bookmarker.Data\Bookmarker.Data.csproj" />
       <ProjectReference Include="..\Bookmarker.Search\Bookmarker.Search.csproj" />
     </ItemGroup>
 </Project>

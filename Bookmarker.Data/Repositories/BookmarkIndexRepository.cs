@@ -1,25 +1,48 @@
-using System.Data;
-using Bookmarker.Contracts.Base.Bookmark.Index;
-using Bookmarker.Contracts.Base.Bookmark.Interfaces;
-using Dapper;
+using Bookmarker.Model;
+using Bookmarker.Model.Entities;
+using Bookmarker.Model.Utils;
+using Microsoft.EntityFrameworkCore;
 
 namespace Bookmarker.Data.Repositories;
 
-public class BookmarkIndexRepository : IBookmarkIndexRepository
+public class BookmarkIndexRepository
 {
-    private readonly IDbConnection _dbConnection;
+    private readonly BookmarkerContext _dbConnection;
 
-    public BookmarkIndexRepository(IDbConnection dbConnection)
+    public BookmarkIndexRepository(BookmarkerContext dbConnection)
     {
         _dbConnection = dbConnection;
     }
+    
+    public async ValueTask<BookmarkIndexStatus?> Create(BookmarkIndexStatus data)
+    {
+        var entity = await _dbConnection.BookmarkIndexStatuses.AddAsync(data);
+        
+        return entity.Entity;
+    }
 
-    public Task<IEnumerable<BookmarkToIndex>?> GetBookmarksToBeFirstIndexed()
-        => _dbConnection.QueryAsync<BookmarkToIndex>(Queries.BookmarkIndex.GET_TO_BASIC_INDEX);
+    public Task<List<Bookmark>> GetBookmarksToBeFirstIndexed()
+    => _dbConnection.BookmarkIndexStatuses.Where(x => !x.HasBasicIndex)
+        .Include(x => x.IdNavigation)
+        .Include(x => x.IdNavigation.Category)
+        .Select(x => x.IdNavigation).ToListAsync();
 
-    public Task<IEnumerable<string>?> GetBookmarksIdToBeFirstIndexed()
-        => _dbConnection.QueryAsync<string>(Queries.BookmarkIndex.GET_ID_TO_BASIC_INDEX);
+    public Task<List<string>> GetBookmarksIdToBeFirstIndexed()
+        => _dbConnection.BookmarkIndexStatuses.Where(x => !x.HasBasicIndex)
+            .Select(x => x.Id.ToString()).ToListAsync();
 
-    public Task<int> SetIndexStatus(string id, bool hasBasicIndex, bool hasArticleIndex, bool hasContentIndex)
-        => _dbConnection.ExecuteAsync(Queries.BookmarkIndex.SET_INDEX_STATUS, new {id, hasBasicIndex, hasArticleIndex, hasContentIndex});
+    public async Task<bool> SetIndexStatus(string id, bool hasBasicIndex, bool hasArticleIndex, bool hasContentIndex)
+    {
+        var toUpdate = await _dbConnection.BookmarkIndexStatuses.FindAsync(id.ToGuid());
+
+        if (toUpdate is null)
+            return false;
+
+        toUpdate.HasBasicIndex = hasBasicIndex;
+        toUpdate.HasArticleIndex = hasArticleIndex;
+        toUpdate.HasContentIndex = hasContentIndex;
+
+        _dbConnection.BookmarkIndexStatuses.Update(toUpdate);
+        return await _dbConnection.SaveChangesAsync() == 1;
+    }
 }

@@ -1,16 +1,18 @@
-using Bookmarker.Contracts.Base.Bookmark.Interfaces;
+using Bookmarker.Data.Repositories;
 
 namespace Bookmarker.Workers;
 
 public class DuplicatedLinkWorker: BackgroundService
 {
-    private readonly ILogger<BrokenLinkWorker> _logger;
-    private readonly IBookmarkRepository _repository;
+    private readonly ILogger<DuplicatedLinkWorker> _logger;
+    private readonly BookmarkRepository _repository;
     
-    public DuplicatedLinkWorker(ILogger<BrokenLinkWorker> logger, IBookmarkRepository repository)
+    public DuplicatedLinkWorker(ILogger<DuplicatedLinkWorker> logger, IServiceProvider serviceProvider)
     {
         _logger = logger;
-        _repository = repository;
+        
+        var scope = serviceProvider.CreateScope();
+        _repository = scope.ServiceProvider.GetService<BookmarkRepository>()!;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -19,25 +21,23 @@ public class DuplicatedLinkWorker: BackgroundService
         {
             _logger.LogInformation("Worker running at: {Time}", DateTimeOffset.Now);
 
-            var toCheck = await _repository.GetActiveIdsAndPureUrls();
+            var toCheck = await _repository.GetActives();
 
-            if (toCheck is not null)
+            if (toCheck.Count > 0)
             {
-                foreach (var (id, pureUrl) in toCheck)
+                foreach (var bookmark in toCheck)
                 {
-                    var duplicates = await _repository.GetDuplicatedLinks(id, pureUrl);
-                    if(duplicates is null)
+                    if (bookmark.PureUrl is null) 
                         continue;
 
-                    foreach (var duplicate in duplicates)
-                        await _repository.FlagDuplicatedLink(id, duplicate);
+                    var id = bookmark.Id.ToString();
+                    var duplicates = _repository.GetDuplicatedLinks(id, bookmark.PureUrl);
+
+                    await foreach (var duplicate in duplicates.WithCancellation(stoppingToken))
+                        await _repository.FlagDuplicatedLink(id, duplicate.Id.ToString());
                 }
-            } 
-            else
-            {
-                _logger.LogInformation("No bookmarks to check");
             }
-            
+
             await Task.Delay(TimeSpan.FromDays(1), stoppingToken);
         }
     }

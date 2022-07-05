@@ -1,4 +1,3 @@
-using Meilisearch;
 using Index = Meilisearch.Index;
 
 namespace Bookmarker.Search;

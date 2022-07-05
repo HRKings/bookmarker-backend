@@ -1,5 +1,5 @@
-using Bookmarker.Contracts.Base.Bookmark.Interfaces;
-using Bookmarker.Contracts.Base.Bookmark.Search;
+using Bookmarker.Contracts.Base;
+using Bookmarker.Data.Repositories;
 using Bookmarker.Search;
 using Index = Meilisearch.Index;
 
@@ -8,15 +8,17 @@ namespace Bookmarker.Workers;
 public class BasicIndexingWorker: BackgroundService
 {
     private readonly ILogger<BasicIndexingWorker> _logger;
-    private readonly IBookmarkIndexRepository _indexRepository;
+    private readonly BookmarkIndexRepository _indexRepository;
     
     private readonly Index _index;
     
-    public BasicIndexingWorker(ILogger<BasicIndexingWorker> logger, IBookmarkIndexRepository indexRepository, IndexWrapper<BookmarkSearchable> indexWrapper)
+    public BasicIndexingWorker(ILogger<BasicIndexingWorker> logger, IServiceProvider serviceProvider, IndexWrapper<SearchBookmark> indexWrapper)
     {
         _logger = logger;
-        _indexRepository = indexRepository;
         _index = indexWrapper.Index;
+        
+        var scope = serviceProvider.CreateScope();
+        _indexRepository = scope.ServiceProvider.GetService<BookmarkIndexRepository>()!;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -27,16 +29,9 @@ public class BasicIndexingWorker: BackgroundService
 
             var toIndex = await _indexRepository.GetBookmarksToBeFirstIndexed();
 
-            if (toIndex is not null)
+            if (toIndex.Count > 0)
             {
-                _ = await _index.AddDocumentsInBatchesAsync(toIndex.Select(unit =>
-                {
-                    var indexable = BookmarkSearchable.FromBookmarkWithId(unit.Id, unit);
-
-                    indexable.CategoryName = unit.CategoryName;
-
-                    return indexable;
-                }), cancellationToken: stoppingToken);
+                _ = await _index.AddDocumentsInBatchesAsync(toIndex.Select(SearchBookmark.FromEntity), cancellationToken: stoppingToken);
             } 
             else
             {

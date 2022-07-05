@@ -1,7 +1,5 @@
-using Bookmarker.Contracts;
+using Bookmarker.API.Services;
 using Bookmarker.Contracts.Base;
-using Bookmarker.Contracts.Base.Bookmark;
-using Bookmarker.Contracts.Base.Bookmark.Interfaces;
 using Bookmarker.Extraction;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,16 +10,16 @@ namespace Bookmarker.API.Controllers;
 public class BookmarkController : ControllerBase
 {
     private readonly ILogger<BookmarkController> _logger;
-    private readonly IBookmarkService _service;
+    private readonly BookmarkService _service;
 
-    public BookmarkController(ILogger<BookmarkController> logger, IBookmarkService service)
+    public BookmarkController(ILogger<BookmarkController> logger, BookmarkService service)
     {
         _logger = logger;
         _service = service;
     }
 
     [HttpPost("full")]
-    public async Task<IActionResult> CreateFull([FromBody] Bookmark request)
+    public async Task<IActionResult> CreateFull([FromBody] BookmarkCreation request)
     {
         if (string.IsNullOrWhiteSpace(request.Url))
             return BadRequest();
@@ -35,7 +33,7 @@ public class BookmarkController : ControllerBase
     }
     
     [HttpPost("url")]
-    public async Task<IActionResult> CreateByUrl([FromBody] Bookmark request)
+    public async Task<IActionResult> CreateByUrl([FromBody] BookmarkCreation request)
     {
         if (string.IsNullOrWhiteSpace(request.Url))
             return BadRequest();
@@ -45,11 +43,11 @@ public class BookmarkController : ControllerBase
         if (result is null)
             return StatusCode(500);
         
-        return Created($"api/v1/{result.Value.Item1}", result.Value.Item2);
+        return Created($"api/v1/{result.Id}", result);
     }
     
     [HttpPost("complete")]
-    public async Task<IActionResult> CreateByRequest([FromBody] Bookmark request)
+    public async Task<IActionResult> CreateByRequest([FromBody] BookmarkCreation request)
     {
         if (string.IsNullOrWhiteSpace(request.Url))
             return BadRequest();
@@ -59,7 +57,7 @@ public class BookmarkController : ControllerBase
         if (result is null)
             return StatusCode(500);
         
-        return Created($"api/v1/{result.Value.Item1}", result.Value.Item2);
+        return Created($"api/v1/{result.Id}", result);
     }
 
     [HttpGet("all")]

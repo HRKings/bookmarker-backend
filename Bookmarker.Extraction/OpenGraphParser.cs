@@ -1,7 +1,4 @@
-﻿using System.Text;
-using Bookmarker.Contracts;
-using Bookmarker.Contracts.Base;
-using Bookmarker.Contracts.Base.Bookmark;
+﻿using Bookmarker.Model.Entities;
 using HtmlAgilityPack;
 
 namespace Bookmarker.Extraction;

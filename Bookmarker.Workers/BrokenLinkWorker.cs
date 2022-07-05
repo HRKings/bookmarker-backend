@@ -1,44 +1,43 @@
-using Bookmarker.Contracts.Base.Bookmark.Interfaces;
+using Bookmarker.Data.Repositories;
 
 namespace Bookmarker.Workers;
 
 public class BrokenLinkWorker: BackgroundService
 {
     private readonly ILogger<BrokenLinkWorker> _logger;
-    private readonly IBookmarkRepository _repository;
+    private readonly BookmarkRepository _repository;
     
-    public BrokenLinkWorker(ILogger<BrokenLinkWorker> logger, IBookmarkRepository repository)
+    public BrokenLinkWorker(ILogger<BrokenLinkWorker> logger, IServiceProvider serviceProvider)
     {
         _logger = logger;
-        _repository = repository;
+        
+        var scope = serviceProvider.CreateScope();
+        _repository = scope.ServiceProvider.GetService<BookmarkRepository>()!;
+
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         const bool CHECK_FOR_BROKEN_LINKS = false;
-        while (CHECK_FOR_BROKEN_LINKS && !stoppingToken.IsCancellationRequested)
+        while (CHECK_FOR_BROKEN_LINKS &&  !stoppingToken.IsCancellationRequested)
         {
             _logger.LogInformation("Worker running at: {Time}", DateTimeOffset.Now);
 
-            var toCheck = await _repository.GetActiveIdsAndUrls();
-
-            if (toCheck is not null)
+            var toCheck = await _repository.GetActives();
+            
+            if (toCheck.Count > 0)
             {
                 var httpClient = new HttpClient();
 
-                foreach (var (id, url) in toCheck)
+                foreach (var bookmark in toCheck)
                 {
-                    var request = await httpClient.GetAsync(url, stoppingToken);
+                    var request = await httpClient.GetAsync(bookmark.Url, stoppingToken);
 
                     if (!request.IsSuccessStatusCode)
-                        await _repository.FlagBrokenLink(id);
+                        await _repository.FlagBrokenLink(bookmark.Id.ToString());
                 }
-            } 
-            else
-            {
-                _logger.LogInformation("No bookmarks to basic index");
             }
-            
+
             await Task.Delay(TimeSpan.FromDays(30), stoppingToken);
         }
     }

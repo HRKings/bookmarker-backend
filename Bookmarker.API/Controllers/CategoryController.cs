@@ -1,5 +1,6 @@
-using Bookmarker.Contracts.Base.Category.Interfaces;
+using Bookmarker.API.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Bookmarker.API.Controllers;
 
@@ -8,9 +9,9 @@ namespace Bookmarker.API.Controllers;
 public class CategoryController : ControllerBase
 {
     private readonly ILogger<CategoryController> _logger;
-    private readonly ICategoryService _service;
+    private readonly CategoryService _service;
 
-    public CategoryController(ILogger<CategoryController> logger, ICategoryService service)
+    public CategoryController(ILogger<CategoryController> logger, CategoryService service)
     {
         _logger = logger;
         _service = service;
@@ -43,6 +44,20 @@ public class CategoryController : ControllerBase
         return Ok(results);
     }
     
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteBehavior([FromRoute] string id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+            return BadRequest();
+
+        var success = await _service.Delete(id);
+
+        if (!success)
+            return StatusCode(500);
+
+        return Ok();
+    }
+
     [HttpGet("toplevel")]
     public async Task<IActionResult> GetTopLevelPaginated([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {

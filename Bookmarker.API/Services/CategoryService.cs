@@ -1,27 +1,22 @@
-using Bookmarker.Contracts.Base.Bookmark;
-using Bookmarker.Contracts.Base.Category;
-using Bookmarker.Contracts.Base.Category.Interfaces;
 using Bookmarker.Contracts.Utils;
+using Bookmarker.Data.Repositories;
+using Bookmarker.Model.Entities;
 
 namespace Bookmarker.API.Services;
 
-public class CategoryService : ICategoryService
+public class CategoryService
 {
-    private readonly ICategoryRepository _repository;
+    private readonly CategoryRepository _repository;
 
-    public CategoryService(ICategoryRepository repository)
+    public CategoryService(CategoryRepository repository)
     {
         _repository = repository;
     }
 
-    public async Task<string?> Create(string title, string icon)
-    {
-        var result = await _repository.Create(title, icon);
+    public ValueTask<Category?> Create(string title, string icon)
+        => _repository.Create(title, icon);
 
-        return result ?? null;
-    }
-
-    public async Task<Paginated<CategoryWithId>?> GetPaginated(int page, int pageSize)
+    public async Task<Paginated<Category>?> GetPaginated(int page, int pageSize)
     {
         var itemCount = await _repository.GetTotalItems();
 
@@ -30,19 +25,13 @@ public class CategoryService : ICategoryService
 
         var entities = await _repository.GetPaginated(pageSize, (page - 1) * pageSize);
 
-        if (entities is null)
+        if (entities.Count == 0)
             return null;
 
         var totalPages = (int) Math.Ceiling(itemCount / (double) pageSize);
-        return new Paginated<CategoryWithId>
+        return new Paginated<Category>
         {
-            Content = entities.Select(entity => new CategoryWithId
-            {
-                Id = entity.Id,
-                Title = entity.Title,
-                ParentId = entity.ParentId,
-                IconifyIcon = entity.IconifyIcon
-            }),
+            Content = entities,
             Page = page,
             ItemsPerPage = pageSize,
             TotalPages = totalPages,
@@ -51,7 +40,7 @@ public class CategoryService : ICategoryService
         };
     }
 
-    public async Task<Paginated<CategoryWithId>?> GetTopLevelPaginated(int page, int pageSize)
+    public async Task<Paginated<Category>?> GetTopLevelPaginated(int page, int pageSize)
     {
         var itemCount = await _repository.GetTopLevelItems();
 
@@ -60,24 +49,24 @@ public class CategoryService : ICategoryService
 
         var entities = await _repository.GetTopLevelPaginated(pageSize, (page - 1) * pageSize);
 
-        if (entities is null)
+        if (entities.Count == 0)
             return null;
 
         var totalPages = (int) Math.Ceiling(itemCount / (double) pageSize);
-        return new Paginated<CategoryWithId>
+        return new Paginated<Category>
         {
-            Content = entities.Select(entity => new CategoryWithId
-            {
-                Id = entity.Id,
-                Title = entity.Title,
-                ParentId = entity.ParentId,
-                IconifyIcon = entity.IconifyIcon
-            }),
+            Content = entities,
             Page = page,
             ItemsPerPage = pageSize,
             TotalPages = totalPages,
             TotalItems = itemCount,
             HasNext = page < totalPages,
         };
+    }
+
+    public async Task<bool> Delete(string id)
+    {
+        var rows = await _repository.Delete(id);
+        return rows == 1;
     }
 }

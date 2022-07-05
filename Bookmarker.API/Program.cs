@@ -1,13 +1,11 @@
-using System.Data;
 using Bookmarker.API.Services;
-using Bookmarker.Contracts.Base.Bookmark.Interfaces;
-using Bookmarker.Contracts.Base.Bookmark.Search;
-using Bookmarker.Contracts.Base.Category.Interfaces;
+using Bookmarker.Contracts.Base;
 using Bookmarker.Data.Repositories;
+using Bookmarker.Model;
 using Bookmarker.Search;
 using Bookmarker.Workers;
 using Meilisearch;
-using Npgsql;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,21 +30,22 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Database
-builder.Services.AddTransient<IDbConnection>(_ => new NpgsqlConnection("Server=localhost;Port=5432;Database=bookmarker;User Id=postgres;Password=password;"));
+builder.Services.AddDbContext<BookmarkerContext>(
+    options => options.UseNpgsql("Server=localhost;Port=5432;Database=bookmarker;User Id=postgres;Password=password;"), ServiceLifetime.Transient);
 
 // Repositories
-builder.Services.AddTransient<IBookmarkRepository, BookmarkRepository>();
-builder.Services.AddTransient<IBookmarkIndexRepository, BookmarkIndexRepository>();
+builder.Services.AddTransient<BookmarkRepository>();
+builder.Services.AddTransient<BookmarkIndexRepository>();
 
-builder.Services.AddTransient<ICategoryRepository, CategoryRepository>();
+builder.Services.AddTransient<CategoryRepository>();
 
 // Services
-builder.Services.AddTransient<IBookmarkService, BookmarkService>();
-builder.Services.AddTransient<ICategoryService, CategoryService>();
+builder.Services.AddTransient<BookmarkService>();
+builder.Services.AddTransient<CategoryService>();
 
 // MeiliSearch
 builder.Services.AddTransient(_ => new MeilisearchClient("http://localhost:7700", "verysecurekey"));
-builder.Services.AddTransient(serviceProvider => new IndexWrapper<BookmarkSearchable>(serviceProvider.GetRequiredService<MeilisearchClient>().Index("bookmark")));
+builder.Services.AddTransient(serviceProvider => new IndexWrapper<SearchBookmark>(serviceProvider.GetRequiredService<MeilisearchClient>().Index("bookmark")));
 
 // Workers
 builder.Services.AddHostedService<BasicIndexingWorker>();

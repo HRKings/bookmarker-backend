@@ -1,39 +1,56 @@
-using System.Data;
-using Bookmarker.Contracts.Base.Category;
-using Bookmarker.Contracts.Base.Category.Interfaces;
 using Bookmarker.Model;
-using Dapper;
+using Bookmarker.Model.Entities;
+using Bookmarker.Model.Utils;
+using Microsoft.EntityFrameworkCore;
 
 namespace Bookmarker.Data.Repositories;
 
-public class CategoryRepository : ICategoryRepository
+public class CategoryRepository
 {
-    private readonly IDbConnection _dbConnection;
+    private readonly BookmarkerContext _dbConnection;
 
-    public CategoryRepository(IDbConnection dbConnection)
+    public CategoryRepository(BookmarkerContext dbConnection)
     {
         _dbConnection = dbConnection;
     }
 
-    public async Task<string?> Create(string title, string icon)
+    public async ValueTask<Category?> Create(string title, string icon)
     {
-        var resultingId = await _dbConnection.QuerySingleAsync<string>(Queries.Category.INSERT, new {title, icon});
-
-        return resultingId;
+        var entity = await _dbConnection.Categories.AddAsync(new Category
+        {
+            Title = title,
+            Icon = icon,
+        });
+        
+        var success = await _dbConnection.SaveChangesAsync() == 1;
+        if (!success)
+            return null;
+        
+        return entity.Entity;
     }
 
-    public Task<Category?> GetById(string id)
-        => _dbConnection.QuerySingleOrDefaultAsync<Category?>(Queries.Category.GET_BY_ID, new {id});
-    
-    public Task<IEnumerable<CategoryEntity>?> GetPaginated(int limit, int offset)
-        => _dbConnection.QueryAsync<CategoryEntity>(Queries.Category.GET_ALL_PAGINATED, new {limit, offset});
+    public ValueTask<Category?> GetById(string id)
+        => _dbConnection.Categories.FindAsync(id.ToGuid());
+
+    public Task<List<Category>> GetPaginated(int limit, int offset)
+        => _dbConnection.Categories.Skip(offset).Take(limit).ToListAsync();
 
     public Task<int> GetTotalItems()
-        => _dbConnection.QuerySingleAsync<int>(Queries.Category.GET_TOTAL_COUNT);
+        => _dbConnection.Bookmarks.CountAsync();
 
-    public Task<IEnumerable<CategoryEntity>?> GetTopLevelPaginated(int limit, int offset)
-        => _dbConnection.QueryAsync<CategoryEntity>(Queries.Category.GET_TOPLEVEL_PAGINATED, new {limit, offset});
+    public Task<List<Category>> GetTopLevelPaginated(int limit, int offset)
+        => _dbConnection.Categories.Where(x => x.ParentId == null).Skip(offset).Take(limit).ToListAsync();
     
     public Task<int> GetTopLevelItems()
-        => _dbConnection.QuerySingleAsync<int>(Queries.Category.GET_TOPLEVEL_COUNT);
+        => _dbConnection.Bookmarks.CountAsync();
+
+    public Task<int> Delete(string id)
+    {
+        _dbConnection.Categories.Remove(new Category
+        {
+            Id = id.ToGuid(),
+        });
+
+        return _dbConnection.SaveChangesAsync();
+    }
 }
